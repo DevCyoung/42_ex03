@@ -3,9 +3,9 @@
 #include <math.h>
 #include <unistd.h>
 
-#define NONE		0 	//원이아님
-#define	OUTLINE 	1	//원의 외곽
-#define INNER		2	//원의 내부
+#define NONE		0 	
+#define	OUTLINE 	1	
+#define INNER		2	
 
 #define ERROR		1
 #define SUCCESS		0
@@ -18,14 +18,15 @@ typedef struct s_board
 	char *map;
 }	t_board;
 
-typedef struct t_circle
+typedef struct t_rect
 {
 	char type;
 	float	x;
 	float	y;
-	float	r;
+	float	w;
+	float	h;
 	char	color;
-}	t_circle;
+}	t_rect;
 
 void	ft_putstr(char *str)
 {
@@ -36,14 +37,24 @@ void	ft_putstr(char *str)
 	}
 }
 
-//x, y좌표는 원의 NONE, OUTLINE, INNER 중 무엇인가?
-int	is_circle(t_circle *c, float x, float y)
+int	is_rect(t_rect *r, float x, float y)
 {
-	// x y와 원의 중점의 거리
-	float distance = sqrtf((c-> x - x) * (c->x - x) + (c-> y - y) * (c->y - y));
-	if (distance > c->r)
+	if (x < r->x)
 		return NONE;
-	if (c->r - distance < 1.0000f)
+	if (x > r->x + r->w)
+		return NONE;
+	if (y < r->y)
+		return NONE;
+	if (y > r->y + r->h)
+		return NONE;
+
+	if (x - r->x < 1.0000f)
+		return OUTLINE;	
+	if (r->x + r->w - x < 1.0000f)
+		return OUTLINE;
+	if (y - r->y < 1.000f)
+		return OUTLINE;
+	if (r->y + r->h - y < 1.0000f)
 		return OUTLINE;
 	return INNER;
 }
@@ -63,27 +74,27 @@ int init_board(FILE *f, t_board *b)
 	return SUCCESS;
 }
 
-int init_circle(FILE *f, t_board *b)
+int init_rect(FILE *f, t_board *b)
 {
-	t_circle c;
+	t_rect r;
 	int		check;
 	while (1)
 	{
-		check = fscanf(f, "%c %f %f %f %c\n", &c.type, &c.x, &c.y, &c.r ,&c.color);
-		if (check != 5)
+		check = fscanf(f, "%c %f %f %f %f %c\n", &r.type, &r.x, &r.y, &r.w , &r.h ,&r.color);
+		if (check != 6)
 			break ;
-		if (c.type != 'c' && c.type != 'C')
+		if (r.type != 'r' && r.type != 'R')
 			return ERROR;
-		if (c.r <= 0.00000f )
+		if (r.w <= 0 || r.h <= 0)
 			return ERROR;
 		for (int y = 0; y < b->h; y++)
 		{
 			for (int x = 0; x < b->w; x++)
 			{
-				if (c.type == 'c' && is_circle(&c, (float)x, (float)y) == OUTLINE)
-					b->map[b->w * y + x] = c.color;
-				else if (c.type == 'C' && is_circle(&c, (float)x, (float)y) != NONE)
-					b->map[b->w * y + x] = c.color;
+				if (r.type == 'r' && is_rect(&r, (float)x, (float)y) == OUTLINE)
+					b->map[b->w * y + x] = r.color;
+				else if (r.type == 'R' && is_rect(&r, (float)x, (float)y) != NONE)
+					b->map[b->w * y + x] = r.color;
 			}
 		}
 	}
@@ -113,7 +124,7 @@ int main(int argc, char **argv)
 		ft_putstr("Error: Operation file corrupted");
 		return ERROR;
 	}
-	if (init_circle(f, &b) == ERROR)
+	if (init_rect(f, &b) == ERROR)
 	{
 		fclose(f);
 		free(b.map);

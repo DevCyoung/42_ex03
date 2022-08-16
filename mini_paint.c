@@ -128,5 +128,7 @@ int main(int argc, char **argv)
 		}
 		ft_putstr("\n");
 	}
+	fclose(f);
+	free(b.map);
 	return SUCCESS;
 }
